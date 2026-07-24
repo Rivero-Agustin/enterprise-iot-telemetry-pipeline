@@ -1,4 +1,5 @@
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
+
 End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker.
 The firmware is built with modularity in mind, featuring concurrent tasks for UWB distance measurement, BLE provisioning/diagnostics, and AWS IoT MQTT communication, managed via RTOS.
 
@@ -9,14 +10,16 @@ The firmware is built with modularity in mind, featuring concurrent tasks for UW
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 
-> **Note:** Sensitive data such as AWS endpoints, Wi-Fi credentials, and X.509 cryptographic certificates have been removed from this repository for security purposes. Please refer to the .env.example and config_example.h files to configure your own environment.
+> **🔒 Security Note:** Sensitive data such as AWS IAM credentials, Wi-Fi passwords, and X.509 cryptographic certificates have been removed from this repository. Please refer to the `.env.example` (backend) and `config.example.h` (firmware) files to configure your own environment.
 
 ## 📋 Overview
+
 An end-to-end Cloud Native architecture designed for Ultra-Wideband (UWB) sensor telemetry. This project bridges physical hardware at the edge with Serverless cloud infrastructure, demonstrating a complete data lifecycle from secure device provisioning to real-time observability.
 
 ### 🎥 Live Demonstration
+
 ![Demo of Grafana Dashboard]([LINK_AL_GIF_O_VIDEO_AQUI])
-*(Real-time telemetry stream handled via custom cache-busting REST API)*
+_(Real-time telemetry stream handled via custom cache-busting REST API)_
 
 ---
 
@@ -26,7 +29,7 @@ An end-to-end Cloud Native architecture designed for Ultra-Wideband (UWB) sensor
 
 The pipeline is structured into four distinct layers:
 
-1. **Edge & Security (Hardware):** 
+1. **Edge & Security (Hardware):**
    - **ESP32** capturing UWB sensor data.
    - Secure device registration via **Zero-Touch Provisioning (JITP)** on AWS IoT Core.
    - Hardware-level security: Persistent storage of X.509 cryptographic certificates and private keys in secure memory partitions (**NVS**).
@@ -42,31 +45,55 @@ The pipeline is structured into four distinct layers:
 
 ---
 
-## 🚀 Local Infrastructure (Docker Compose)
+## 🗂️ Monorepo Structure
 
-The backend and observability layers are fully containerized. You can spin up the local environment (Node.js API, MongoDB, and Grafana) using the provided `docker-compose.yml`.
+This project uses a monorepo approach to separate concerns while keeping the full pipeline in one place:
+
+- `/firmware`: PlatformIO project containing the C++ code for the ESP32.
+- `/backend`: Node.js microservice, Grafana provisioning, and Docker Compose configurations.
+
+---
+
+## 🚀 Local Deployment (Backend & Observability)
+
+The backend and observability layers are fully containerized. You can spin up the local environment (Node.js API, MongoDB, and Grafana) using Docker.
 
 ### Prerequisites
-* [Docker](https://docs.docker.com/get-docker/) & Docker Compose installed.
 
-### Run the Stack
+- [Docker](https://docs.docker.com/get-docker/) & Docker Compose installed.
 
-1. Clone this repository:
+### Setup Instructions
+
+1. **Clone this repository:**
    ```bash
-   git clone [https://github.com/](https://github.com/)[TU_USUARIO]/[TU_REPOSITORIO].git
+   git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
    cd [TU_REPOSITORIO]
 
-2. Start the services using Docker Compose:
-   ```bash
-   docker-compose up -d
+   ```
+2. Configure Environment Variables:
+   Navigate to the backend directory and set up your AWS credentials.
 
-3. Access the services:
    ```bash
-   Grafana Dashboard: http://localhost:3000 (Default credentials: admin / admin)
-   Node.js REST API: http://localhost:3001 (Or the port you mapped)
-   MongoDB Instance: mongodb://localhost:27017
+   cd backend
+   cp .env.example .env
+   *Edit the .env file with your AWS IAM keys and SQS URL.*
 
-*Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts.*
+   ```
+
+3. Start the Microservices:
+
+   ```bash
+   docker-compose up -d --build
+
+   ```
+
+4. Access the Services:
+
+- Grafana Dashboard: http://localhost:3000 (Default: admin / admin)
+- Node.js REST API: http://localhost:3001
+- MongoDB Instance: mongodb://localhost:27017
+
+_Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts._
 
 ## 🛠️ Key Technical Highlights
 
