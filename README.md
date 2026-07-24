@@ -1,5 +1,6 @@
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker.
+The firmware is built with modularity in mind, featuring concurrent tasks for UWB distance measurement, BLE provisioning/diagnostics, and AWS IoT MQTT communication, managed via RTOS.
 
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
