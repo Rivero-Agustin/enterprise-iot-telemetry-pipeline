@@ -69,7 +69,8 @@ MongoDB Instance: mongodb://localhost:27017
 
 Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts.
 
-- **🛠️ Key Technical Highlights**
-- Cryptographic Security: Implemented the Principle of Least Privilege across the device lifecycle.
-- Microservices Orchestration: Fully isolated backend components using Docker networks and volumes.
-- Real-time Observability: Solved native dashboard latency by engineering a custom cache-busting API endpoint for Grafana.
+##**🛠️ Key Technical Highlights**
+
+- **Cryptographic Security:** Implemented the Principle of Least Privilege across the device lifecycle.
+- **Microservices Orchestration:** Fully isolated backend components using Docker networks and volumes.
+- **Real-time Observability:** Solved native dashboard latency by engineering a custom cache-busting API endpoint for Grafana.
