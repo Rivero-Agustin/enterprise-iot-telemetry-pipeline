@@ -65,11 +65,13 @@ The backend and observability layers are fully containerized. You can spin up th
 ### Setup Instructions
 
 1. **Clone this repository:**
+
    ```bash
    git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
-   cd [TU_REPOSITORIO]
+   cd esp32-iot-telemetry-pipeline
 
    ```
+
 2. Configure Environment Variables:
    Navigate to the backend directory and set up your AWS credentials.
 
