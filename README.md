@@ -8,7 +8,7 @@ End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrate
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 
-> **Note:** This is a Showcase repository. Due to the presence of private cryptographic keys, sensitive hardware logic, and AWS credentials, the core C++ and application code is kept private. This repository demonstrates the architecture, infrastructure design, and the containerized backend environment.
+> **Note:** Sensitive data such as AWS endpoints, Wi-Fi credentials, and X.509 cryptographic certificates have been removed from this repository for security purposes. Please refer to the .env.example and config_example.h files to configure your own environment.
 
 ## 📋 Overview
 An end-to-end Cloud Native architecture designed for Ultra-Wideband (UWB) sensor telemetry. This project bridges physical hardware at the edge with Serverless cloud infrastructure, demonstrating a complete data lifecycle from secure device provisioning to real-time observability.
