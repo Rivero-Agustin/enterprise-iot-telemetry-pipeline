@@ -70,8 +70,6 @@ The backend and observability layers are fully containerized. You can spin up th
    git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
    cd esp32-iot-telemetry-pipeline
 
-   ```
-
 2. Configure Environment Variables:
    Navigate to the backend directory and set up your AWS credentials.
 
@@ -80,14 +78,10 @@ The backend and observability layers are fully containerized. You can spin up th
    cp .env.example .env
 *Edit the .env file with your AWS IAM keys and SQS URL.*
 
-   ```
-
 3. Start the Microservices:
 
    ```bash
    docker-compose up -d --build
-
-   ```
 
 4. Access the Services:
 
