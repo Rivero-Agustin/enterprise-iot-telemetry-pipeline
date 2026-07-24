@@ -59,17 +59,15 @@ The backend and observability layers are fully containerized. You can spin up th
    ```bash
    docker-compose up -d
 
-Access the services:
+3. Access the services:
+   ```bash
+   Grafana Dashboard: http://localhost:3000 (Default credentials: admin / admin)
+   Node.js REST API: http://localhost:3001 (Or the port you mapped)
+   MongoDB Instance: mongodb://localhost:27017
 
-Grafana Dashboard: http://localhost:3000 (Default credentials: admin / admin)
+*Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts.*
 
-Node.js REST API: http://localhost:3001 (Or the port you mapped)
-
-MongoDB Instance: mongodb://localhost:27017
-
-Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts.
-
-##**🛠️ Key Technical Highlights**
+## 🛠️ Key Technical Highlights
 
 - **Cryptographic Security:** Implemented the Principle of Least Privilege across the device lifecycle.
 - **Microservices Orchestration:** Fully isolated backend components using Docker networks and volumes.
