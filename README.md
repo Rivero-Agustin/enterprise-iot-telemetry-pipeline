@@ -78,7 +78,7 @@ The backend and observability layers are fully containerized. You can spin up th
    ```bash
    cd backend
    cp .env.example .env
-   *Edit the .env file with your AWS IAM keys and SQS URL.*
+*Edit the .env file with your AWS IAM keys and SQS URL.*
 
    ```
 
