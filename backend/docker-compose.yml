@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  base-datos-iot:
+    image: mongo:latest
+    container_name: base-datos-iot
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mi-consumidor-iot:
+    build: .
+    container_name: mi-consumidor-iot
+    restart: unless-stopped
+    ports:
+      - "8080:8080" # Puerto por donde Grafana va a leer los datos
+    env_file:
+      - .env
+    environment:
+      # Fijate que acá Node se conecta a Mongo usando el nombre del contenedor
+      - MONGO_URI=mongodb://base-datos-iot:27017/iot_db
+    depends_on:
+      - base-datos-iot
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: iot_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Panel web
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=marcusolsson-json-datasource
+    depends_on:
+      - mi-consumidor-iot
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+volumes:
+  mongo_data:
+  grafana-storage:
