@@ -11,6 +11,6 @@ firmware/include/config.h
 firmware/include/certs.h
 firmware/src/certs/
 
-# Entornos de Backend (para cuando subas Node.js)
-node_modules/
-.env
+# Node.js
+backend/node_modules/
+backend/.env
