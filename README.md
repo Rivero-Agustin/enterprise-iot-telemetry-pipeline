@@ -25,7 +25,38 @@ _(Real-time telemetry stream handled via custom cache-busting REST API)_
 
 ## 🏗️ Architecture & Data Flow
 
-![Architecture Diagram]([LINK_A_TU_DIAGRAMA_AQUI_EJ_DRAWIO])
+```mermaid
+graph LR
+    %% Definición de zonas (Subgraphs)
+    subgraph Edge ["Edge (Hardware)"]
+        UWB[UWB Sensor] -->|Distance Data| ESP[ESP32 Firmware]
+    end
+
+    subgraph AWS ["AWS Cloud (Serverless)"]
+        ESP -->|MQTT over mTLS| IOT[AWS IoT Core]
+        IOT -->|IoT Rule| SQS[Amazon SQS Queue]
+    end
+
+    subgraph Docker ["Docker Environment (Local)"]
+        SQS -->|Long Polling| NODE[Node.js Backend]
+        NODE -->|Time-series storage| DB[(MongoDB)]
+        GRAFANA[Grafana Dashboard] -.->|REST API queries| NODE
+        NODE -->|JSON Data| GRAFANA
+    end
+
+    %% Estilos (opcionales para darle color)
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:white;
+    classDef node fill:#6DA55F,stroke:#333,stroke-width:2px,color:white;
+    classDef db fill:#4ea94b,stroke:#333,stroke-width:2px,color:white;
+    classDef grafana fill:#F46800,stroke:#333,stroke-width:2px,color:white;
+    classDef hw fill:#333333,stroke:#000,stroke-width:2px,color:white;
+
+    class IOT,SQS aws;
+    class NODE node;
+    class DB db;
+    class GRAFANA grafana;
+    class ESP,UWB hw;
+```
 
 The pipeline is structured into four distinct layers:
 
@@ -70,24 +101,18 @@ The backend and observability layers are fully containerized. You can spin up th
    git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
    cd esp32-iot-telemetry-pipeline
 
-   ```
-
 2. Configure Environment Variables:
    Navigate to the backend directory and set up your AWS credentials.
 
    ```bash
    cd backend
    cp .env.example .env
-   *Edit the .env file with your AWS IAM keys and SQS URL.*
-
-   ```
+*Edit the .env file with your AWS IAM keys and SQS URL.*
 
 3. Start the Microservices:
 
    ```bash
    docker-compose up -d --build
-
-   ```
 
 4. Access the Services:
 
