@@ -18,14 +18,21 @@ An end-to-end Cloud Native architecture designed for Ultra-Wideband (UWB) sensor
 
 ### 🎥 Live Demonstration
 
-![Demo of Grafana Dashboard]([LINK_AL_GIF_O_VIDEO_AQUI])
+![Demo of Grafana Dashboard](./docs/demo.dashboard.grafana.gif)
+
+**The Data Lifecycle in Action:**
+
+- 📍 **Edge (Bottom Left):** ESP32 UWB Pro hardware displaying raw distance measurements locally.
+- ⚙️ **Backend (Bottom Right):** Containerized Node.js microservice pulling messages from AWS SQS, persisting them to MongoDB, and acknowledging/deleting them from the queue.
+- 📊 **Observability (Top):** Grafana dashboard instantly reflecting physical distance variations.
+
 _(Real-time telemetry stream handled via custom cache-busting REST API)_
 
 ---
 
 ## 🏗️ Architecture & Data Flow
 
-![Architecture Diagram](./architecture.diagram.png)
+![Architecture Diagram](./docs/architecture.diagram.png)
 
 The pipeline is structured into four distinct layers:
 
