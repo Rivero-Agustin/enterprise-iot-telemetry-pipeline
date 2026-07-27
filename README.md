@@ -25,7 +25,7 @@ _(Real-time telemetry stream handled via custom cache-busting REST API)_
 
 ## 🏗️ Architecture & Data Flow
 
-![Architecture Diagram](./diagrama-arquitectura.png)
+![Architecture Diagram](./architecture.diagram.png.png)
 
 The pipeline is structured into four distinct layers:
 
