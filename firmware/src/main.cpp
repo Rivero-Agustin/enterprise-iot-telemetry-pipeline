@@ -8,11 +8,9 @@
 #include "uwb_engine.h"
 #include "ble_manager.h"
 #include "wifi_manager.h"
+#include "mqtt_manager.h"
 #include "nvs_manager.h"
 #include "config.h"
-
-// --- CONFIGURACIÓN DE ROL (Ancla o Etiqueta) ---
-#define IS_ANCHOR true
 
 static const char* LOGTAG = "MAIN";
 
@@ -50,11 +48,12 @@ void taskUWB(void *pvParameters) {
 void taskRedes(void *pvParameters) {
     Serial.println("Core 0: Iniciando pila de red...");
 
-    initWiFi(WIFI_SSID, WIFI_PASS);
+    bool mqtt_iniciado = false;
 
     // Inicializamos el BLE con un nombre dinámico según el Rol
     if (IS_ANCHOR) {
         initBLE("UWB_Anchor");
+        initWiFi(WIFI_SSID, WIFI_PASS);
     } else {
         initBLE("UWB_Tag");
     }
@@ -65,13 +64,20 @@ void taskRedes(void *pvParameters) {
         
         // Empujamos el dato al celular (la función evalúa sola si hay alguien conectado)
         updateBLEDistance(dist_para_enviar);
-        
-        // Ejemplo de lógica de red de fondo:
-        if (isWiFiConnected()) {
 
-        } else {
-            ESP_LOGW(LOGTAG, "Intentando reconectar...");
-            reconnectWiFi(WIFI_SSID, WIFI_PASS);
+        if (IS_ANCHOR) {
+            if (isWiFiConnected()) {
+                if (!mqtt_iniciado) {
+                    ESP_LOGI(LOGTAG, "Wi-Fi estable. Iniciando AWS MQTT...");
+                    vTaskDelay(1500 / portTICK_PERIOD_MS);
+                    
+                    mqtt_app_start();
+                    mqtt_iniciado = true;
+                }
+            } else {
+                ESP_LOGW(LOGTAG, "Intentando reconectar...");
+                reconnectWiFi(WIFI_SSID, WIFI_PASS);
+            }
         }
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }

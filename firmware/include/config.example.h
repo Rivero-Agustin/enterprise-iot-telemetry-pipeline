@@ -1,11 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// --- CONFIGURACIÓN DE ROL (Ancla o Etiqueta) ---
+#define IS_ANCHOR true
+
 /* =======================================================
  * CREDENCIALES DE RED Y NUBE (Reemplazar con datos reales)
  * ======================================================= */
-const char* WIFI_SSID = "TU_RED_WIFI";
-const char* WIFI_PASS = "TU_CONTRASEÑA";
+#define WIFI_SSID "TU_RED_WIFI"
+#define WIFI_PASS "TU_CONTRASEÑA"
 
 // AWS IoT Core Endpoint (Broker MQTT)
 #define ENDPOINT "mqtts://xxxxxxxxxxxxxx-ats.iot.us-east-1.amazonaws.com:8883"

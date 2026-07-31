@@ -25,7 +25,6 @@ void initWiFi(const char* ssid, const char* password) {
 
     if (WiFi.status() == WL_CONNECTED) {
         ESP_LOGI(LOGTAG, "Wi-Fi conectado con éxito. IP: %s", WiFi.localIP().toString().c_str());
-        mqtt_app_start();
     } else {
         ESP_LOGE(LOGTAG, "No se pudo conectar al Wi-Fi");
     }

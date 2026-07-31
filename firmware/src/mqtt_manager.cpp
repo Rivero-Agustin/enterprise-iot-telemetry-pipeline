@@ -22,7 +22,6 @@ bool provisioning_completed = false;
 
 char ownership_token[1024] = {0};
 
-
 bool parse_aws_certificates_response(const char* json_data) {
     cJSON *root = cJSON_Parse(json_data);
     if (root == NULL) {
@@ -75,9 +74,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             } else {
                 // Modo Normal: Suscribirte a tus tópicos de trabajo habituales
                 ESP_LOGI("MQTT", "Modo Operativo Normal. Dispositivo ya registrado.");
-                            esp_mqtt_client_subscribe(client, "esp32/comandos", 1);
-
-                ESP_LOGI("MQTT", "Modo Operativo Normal. Dispositivo ya registrado.");
+                esp_mqtt_client_subscribe(client, "esp32/comandos", 1);
         
                 // Lanzamos la tarea de FreeRTOS si no estaba corriendo ya
                 if (telemetry_task_handle == NULL) {
@@ -93,7 +90,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
             }
             break;
-
         } 
             
         case MQTT_EVENT_DISCONNECTED:
@@ -135,8 +131,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 }
             } 
             else if (strncmp(event->topic, TOPIC_REGISTER_ACC, event->topic_len) == 0) {
-                ESP_LOGI("MQTT", "¡Aprovisionamiento JITP completado con éxito en AWS!");
-                provisioning_completed = true; // Levantamos la bandera para reiniciar
+                // Ejecutamos el reinicio
+                ESP_LOGW("MQTT", "¡Aprovisionamiento JITP completado! Reiniciando ESP32 en 2 seg...");
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
+                esp_restart();
             }
             break;
 
@@ -155,6 +153,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_app_start(void)
 {
+    // BARRERA DE SEGURIDAD: Si es un Tag, abortamos la inicialización de MQTT para ahorrar batería
+    if (!IS_ANCHOR) {
+        ESP_LOGI(LOGTAG, "Rol: TAG. Se deshabilita el cliente MQTT para ahorrar energía.");
+        return;
+    }
+
     // En C++ inicializamos el struct en 0 de esta manera:
     esp_mqtt_client_config_t mqtt_cfg = {};
     
@@ -191,14 +195,4 @@ void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 
     global_mqtt_client = client;
-
-    // 5. Bucle principal
-    while (1) {
-        if (provisioning_completed) {
-            ESP_LOGW(LOGTAG, "Aprovisionamiento listo. Reiniciando ESP32 para aplicar llaves...");
-            vTaskDelay(2000 / portTICK_PERIOD_MS);
-            esp_restart(); // Soft reset. Al arrancar de nuevo, is_device_provisioned() será true.
-        }
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-    }
 }
