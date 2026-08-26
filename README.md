@@ -1,3 +1,7 @@
+<div align="right">
+  🌎 <a href="README.md">English</a> | 🇪🇸 <a href="README-es.md">Español</a>
+</div>
+
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 
 End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker.
