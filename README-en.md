@@ -4,7 +4,7 @@
 
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 
-End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker.
+End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker, with automated cloud infrastructure using Terraform (IaC) and a GitOps pipeline via GitHub Actions.
 The firmware is built with modularity in mind, featuring concurrent tasks for UWB distance measurement, BLE provisioning/diagnostics, and AWS IoT MQTT communication, managed via RTOS.
 
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
@@ -14,6 +14,7 @@ The firmware is built with modularity in mind, featuring concurrent tasks for UW
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E8.svg?style=for-the-badge&logo=githubactions&logoColor=white)
 
 > **🔒 Security Note:** Sensitive data such as AWS IAM credentials, Wi-Fi passwords, and X.509 cryptographic certificates have been removed from this repository. Please refer to the `.env.example` (backend) and `config.example.h` (firmware) files to configure your own environment.
 
@@ -39,7 +40,7 @@ _(Real-time telemetry stream handled via custom cache-busting REST API)_
 
 ![Architecture Diagram](./docs/architecture.diagram.png)
 
-The pipeline is structured into four distinct layers:
+The pipeline is structured into five distinct layers:
 
 1. **Edge & Security (Hardware):**
    - **ESP32** capturing UWB sensor data.
@@ -48,12 +49,17 @@ The pipeline is structured into four distinct layers:
 2. **Cloud Ingestion (AWS Serverless):**
    - Asynchronous MQTT message routing using **AWS IoT Rules**.
    - Decoupling and message queuing via **AWS SQS** for reliable backend processing.
+   - Fault tolerance & resilience: **Dead Letter Queue (DLQ)** with automatic redrive policy.
 3. **Backend & Persistence:**
-   - Containerized **Node.js** microservice acting as an SQS consumer.
+   - Containerized **Node.js** microservice acting as an SQS consumer using long-polling.
    - Time-series data formatting (ordered by `-1` limits and timestamps) stored in **MongoDB**.
 4. **Observability (Frontend):**
    - **Grafana** dashboard containerized alongside the backend.
    - Consumes data via a Custom JSON REST API with tailored `cache-busting` parameters (`?cb=${__to}`) to ensure zero-latency live data streaming.
+5. **Infrastructure as Code (IaC) & GitOps:**
+   - Declarative and version-controlled AWS deployment with **Terraform**.
+   - Secure remote state storage encrypted in **AWS S3** with **DynamoDB State Locking**.
+   - Automated CI/CD pipeline via **GitHub Actions**: predictive `terraform plan` comments on Pull Requests and automatic `terraform apply` on merge to `main`.
 
 ---
 
@@ -61,6 +67,7 @@ The pipeline is structured into four distinct layers:
 
 This project uses a monorepo approach to separate concerns while keeping the full pipeline in one place:
 
+- `/.github`: CI/CD automation with GitHub Actions for Terraform validation and GitOps deployments.
 - `/firmware`: PlatformIO project containing the C++ code for the ESP32.
 - `/backend`: Node.js microservice, Grafana provisioning, and Docker Compose configurations.
 - `/terraform`: Infrastructure as Code (IaC) in HCL automating AWS SQS queues, Dead Letter Queues (DLQ), AWS IoT Core rules, and Least Privilege IAM policies.
@@ -143,6 +150,8 @@ _Data persistence is configured via Docker volumes (/var/lib/grafana and /data/d
 
 ## 🛠️ Key Technical Highlights
 
-- **Cryptographic Security:** Implemented the Principle of Least Privilege across the device lifecycle.
+- **Infrastructure as Code (IaC) & GitOps:** 100% automated cloud deployment using Terraform in HCL, secure remote state storage on AWS S3 with DynamoDB state locking, and an automated GitHub Actions CI/CD pipeline with predictive plan PR comments.
+- **Message Resilience & Reliability:** Asynchronous decoupling via AWS SQS combined with a Dead Letter Queue (DLQ) and automatic redrive policies to isolate errors without pipeline interruption.
+- **Cryptographic Security:** Strict implementation of the Principle of Least Privilege across the device lifecycle and granular IAM roles.
 - **Microservices Orchestration:** Fully isolated backend components using Docker networks and volumes.
 - **Real-time Observability:** Solved native dashboard latency by engineering a custom cache-busting API endpoint for Grafana.

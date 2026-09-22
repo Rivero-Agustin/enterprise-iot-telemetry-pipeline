@@ -4,7 +4,7 @@
 
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 
-Pipeline de telemetría IoT Cloud Native de extremo a extremo: ESP32 a AWS (JITP), orquestado con Node.js, MongoDB y Grafana mediante Docker.
+Pipeline de telemetría IoT Cloud Native de extremo a extremo: ESP32 a AWS (JITP), orquestado con Node.js, MongoDB y Grafana mediante Docker, con infraestructura automatizada mediante Terraform (IaC) y pipeline GitOps en GitHub Actions.
 El firmware está diseñado teniendo en cuenta la modularidad, presentando tareas concurrentes para la medición de distancia UWB, aprovisionamiento/diagnóstico BLE y comunicación MQTT con AWS IoT, gestionado a través de RTOS.
 
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
@@ -14,6 +14,7 @@ El firmware está diseñado teniendo en cuenta la modularidad, presentando tarea
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E8.svg?style=for-the-badge&logo=githubactions&logoColor=white)
 
 > **🔒 Nota de Seguridad:** Los datos sensibles como credenciales de AWS IAM, contraseñas de Wi-Fi y certificados criptográficos X.509 han sido eliminados de este repositorio. Por favor, consulte los archivos `.env.example` (backend) y `config.example.h` (firmware) para configurar su propio entorno.
 
@@ -39,7 +40,7 @@ _(Flujo de telemetría en tiempo real gestionado mediante una API REST personali
 
 ![Diagrama de Arquitectura](./docs/architecture.diagram.png)
 
-El pipeline está estructurado en cuatro capas diferenciadas:
+El pipeline está estructurado en cinco capas diferenciadas:
 
 1. **Edge y Seguridad (Hardware):**
    - **ESP32** capturando datos de sensores UWB.
@@ -48,12 +49,17 @@ El pipeline está estructurado en cuatro capas diferenciadas:
 2. **Ingesta Cloud (AWS Serverless):**
    - Enrutamiento asíncrono de mensajes MQTT utilizando **AWS IoT Rules**.
    - Desacoplamiento y encolamiento de mensajes mediante **AWS SQS** para un procesamiento fiable en el backend.
+   - Resiliencia y tolerancia a fallos: **Dead Letter Queue (DLQ)** con política de reenvío automático.
 3. **Backend y Persistencia:**
-   - Microservicio **Node.js** contenedorizado actuando como consumidor de SQS.
+   - Microservicio **Node.js** contenedorizado actuando como consumidor de SQS mediante long-polling.
    - Formateo de datos de series temporales (ordenados por límites `-1` y marcas de tiempo) almacenados en **MongoDB**.
 4. **Observabilidad (Frontend):**
    - Dashboard de **Grafana** contenedorizado junto con el backend.
    - Consume datos mediante una API REST JSON personalizada con parámetros adaptados de `cache-busting` (`?cb=${__to}`) para garantizar la transmisión de datos en vivo sin latencia.
+5. **Infraestructura como Código (IaC) & GitOps:**
+   - Despliegue declarativo y versionado de AWS con **Terraform**.
+   - Gestión de estado remoto seguro con cifrado en **AWS S3** y bloqueo de concurrencia con **DynamoDB**.
+   - Pipeline CI/CD en **GitHub Actions**: validación y `terraform plan` predictivo en Pull Requests, y `terraform apply` automático al fusionar a `main`.
 
 ---
 
@@ -61,6 +67,7 @@ El pipeline está estructurado en cuatro capas diferenciadas:
 
 Este proyecto utiliza un enfoque monorepo para separar responsabilidades manteniendo todo el pipeline en un solo lugar:
 
+- `/.github`: Automatización CI/CD con GitHub Actions para validación y despliegue GitOps de Terraform.
 - `/firmware`: Proyecto de PlatformIO que contiene el código C++ para el ESP32.
 - `/backend`: Microservicio Node.js, aprovisionamiento de Grafana y configuraciones de Docker Compose.
 - `/terraform`: Infraestructura como Código (IaC) para aprovisionar colas SQS, Dead Letter Queues (DLQ), reglas de AWS IoT Core y políticas IAM con Principio de Menor Privilegio.
@@ -140,6 +147,8 @@ _La persistencia de datos está configurada mediante volúmenes de Docker (/var/
 
 ## 🛠️ Aspectos Técnicos Destacados
 
-- **Seguridad Criptográfica:** Implementación del Principio de Menor Privilegio a lo largo de todo el ciclo de vida del dispositivo.
+- **Infraestructura como Código (IaC) & GitOps:** Despliegue cloud 100% automatizado mediante Terraform en HCL, backend remoto protegido en AWS S3 con DynamoDB state locking, y pipeline CI/CD en GitHub Actions con planes predictivos en PRs.
+- **Resiliencia y Confiabilidad:** Desacoplamiento asíncrono con AWS SQS y Dead Letter Queue (DLQ) con política de reintentos para aislar errores sin interrupciones.
+- **Seguridad Criptográfica:** Implementación del Principio de Menor Privilegio a lo largo de todo el ciclo de vida del dispositivo y roles IAM acotados.
 - **Orquestación de Microservicios:** Componentes de backend completamente aislados utilizando redes y volúmenes de Docker.
 - **Observabilidad en Tiempo Real:** Resolución de la latencia nativa del dashboard mediante la ingeniería de un endpoint API personalizado con cache-busting para Grafana.
