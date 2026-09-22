@@ -13,6 +13,7 @@ El firmware está diseñado teniendo en cuenta la modularidad, presentando tarea
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
+![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 
 > **🔒 Nota de Seguridad:** Los datos sensibles como credenciales de AWS IAM, contraseñas de Wi-Fi y certificados criptográficos X.509 han sido eliminados de este repositorio. Por favor, consulte los archivos `.env.example` (backend) y `config.example.h` (firmware) para configurar su propio entorno.
 
@@ -62,6 +63,38 @@ Este proyecto utiliza un enfoque monorepo para separar responsabilidades manteni
 
 - `/firmware`: Proyecto de PlatformIO que contiene el código C++ para el ESP32.
 - `/backend`: Microservicio Node.js, aprovisionamiento de Grafana y configuraciones de Docker Compose.
+- `/terraform`: Infraestructura como Código (IaC) para aprovisionar colas SQS, Dead Letter Queues (DLQ), reglas de AWS IoT Core y políticas IAM con Principio de Menor Privilegio.
+
+---
+
+## ☁️ Despliegue de Infraestructura Cloud (Terraform)
+
+Toda la infraestructura requerida en AWS se despliega automáticamente en segundos utilizando Terraform:
+
+1. **Requisitos Previos:**
+   - [Terraform](https://developer.hashicorp.com/terraform/install) (>= 1.5.0).
+   - Credenciales de AWS configuradas en el entorno (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`).
+
+2. **Inicializar y Desplegar:**
+
+   ```bash
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+3. **Conectar con Backend y Firmware:**
+   Terraform generará automáticamente los endpoints y URLs necesarios:
+   - `sqs_queue_url` ➔ Copiar en `QUEUE_URL` dentro de `backend/.env`.
+   - `iot_endpoint` ➔ Copiar en `ENDPOINT` dentro de `firmware/include/config.h`.
+
+4. **Destruir Recursos (Ahorro de Costos):**
+   Para eliminar todos los recursos de AWS y evitar costos cuando no esté en uso:
+
+   ```bash
+   terraform destroy
+   ```
 
 ---
 

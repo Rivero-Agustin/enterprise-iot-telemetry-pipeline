@@ -13,6 +13,7 @@ The firmware is built with modularity in mind, featuring concurrent tasks for UW
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
+![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 
 > **🔒 Security Note:** Sensitive data such as AWS IAM credentials, Wi-Fi passwords, and X.509 cryptographic certificates have been removed from this repository. Please refer to the `.env.example` (backend) and `config.example.h` (firmware) files to configure your own environment.
 
@@ -62,6 +63,38 @@ This project uses a monorepo approach to separate concerns while keeping the ful
 
 - `/firmware`: PlatformIO project containing the C++ code for the ESP32.
 - `/backend`: Node.js microservice, Grafana provisioning, and Docker Compose configurations.
+- `/terraform`: Infrastructure as Code (IaC) in HCL automating AWS SQS queues, Dead Letter Queues (DLQ), AWS IoT Core rules, and Least Privilege IAM policies.
+
+---
+
+## ☁️ Cloud Infrastructure Deployment (Terraform)
+
+All required AWS cloud infrastructure can be provisioned in seconds using Terraform:
+
+1. **Prerequisites:**
+   - [Terraform](https://developer.hashicorp.com/terraform/install) (>= 1.5.0).
+   - AWS credentials configured in your environment (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`).
+
+2. **Initialize and Deploy:**
+
+   ```bash
+   cd terraform
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+3. **Wire with Backend and Firmware:**
+   Terraform outputs the dynamic endpoints and queue URLs directly:
+   - `sqs_queue_url` ➔ Set as `QUEUE_URL` in `backend/.env`.
+   - `iot_endpoint` ➔ Set as `ENDPOINT` in `firmware/include/config.h`.
+
+4. **Tear Down Infrastructure (Zero-Cost Guarantee):**
+   To destroy all AWS cloud resources and avoid incurring any unwanted costs:
+
+   ```bash
+   terraform destroy
+   ```
 
 ---
 

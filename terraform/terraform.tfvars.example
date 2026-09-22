@@ -1,0 +1,6 @@
+aws_region        = "us-east-1"
+project_name      = "enterprise-iot-telemetry-pipeline"
+environment       = "dev"
+sqs_queue_name    = "esp32-telemetria-queue"
+mqtt_topic_filter = "esp32/datos/+"
+
