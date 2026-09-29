@@ -15,6 +15,7 @@ El firmware está diseñado teniendo en cuenta la modularidad, presentando tarea
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E8.svg?style=for-the-badge&logo=githubactions&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
 
 > **🔒 Nota de Seguridad:** Los datos sensibles como credenciales de AWS IAM, contraseñas de Wi-Fi y certificados criptográficos X.509 han sido eliminados de este repositorio. Por favor, consulte los archivos `.env.example` (backend) y `config.example.h` (firmware) para configurar su propio entorno.
 
@@ -70,6 +71,7 @@ Este proyecto utiliza un enfoque monorepo para separar responsabilidades manteni
 - `/.github`: Automatización CI/CD con GitHub Actions para validación y despliegue GitOps de Terraform.
 - `/firmware`: Proyecto de PlatformIO que contiene el código C++ para el ESP32.
 - `/backend`: Microservicio Node.js, aprovisionamiento de Grafana y configuraciones de Docker Compose.
+- `/k8s`: Manifiestos de Kubernetes nativo estructurados con Kustomize (Deployments, StatefulSets, Probes) listos para orquestación GitOps con ArgoCD.
 - `/terraform`: Infraestructura como Código (IaC) para aprovisionar colas SQS, Dead Letter Queues (DLQ), reglas de AWS IoT Core y políticas IAM con Principio de Menor Privilegio.
 
 ---

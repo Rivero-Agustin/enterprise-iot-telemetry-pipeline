@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: iot-pipeline
+  labels:
+    app.kubernetes.io/name: backend-consumer
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http-telemetry
+  selector:
+    app.kubernetes.io/name: backend-consumer

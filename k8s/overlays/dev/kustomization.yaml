@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Hereda toda la configuración base
+resources:
+  - ../../base
+
+# Sobrescribe etiquetas o nombres para el entorno de desarrollo
+namePrefix: dev-
+
+commonLabels:
+  environment: dev
