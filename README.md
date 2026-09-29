@@ -4,7 +4,7 @@
 
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 
-Pipeline de telemetría IoT Cloud Native de extremo a extremo: ESP32 a AWS (JITP), orquestado con Node.js, MongoDB y Grafana mediante Docker, con infraestructura automatizada mediante Terraform (IaC) y pipeline GitOps en GitHub Actions.
+Pipeline de telemetría IoT Cloud Native de extremo a extremo: ESP32 a AWS (JITP), orquestado tanto en Docker como en Kubernetes nativo con ArgoCD (GitOps), con infraestructura en la nube automatizada mediante Terraform (IaC) y CI/CD en GitHub Actions.
 El firmware está diseñado teniendo en cuenta la modularidad, presentando tareas concurrentes para la medición de distancia UWB, aprovisionamiento/diagnóstico BLE y comunicación MQTT con AWS IoT, gestionado a través de RTOS.
 
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
@@ -53,15 +53,16 @@ El pipeline está estructurado en cinco capas diferenciadas:
    - Desacoplamiento y encolamiento de mensajes mediante **AWS SQS** para un procesamiento fiable en el backend.
    - Resiliencia y tolerancia a fallos: **Dead Letter Queue (DLQ)** con política de reenvío automático.
 3. **Backend y Persistencia:**
-   - Microservicio **Node.js** contenedorizado actuando como consumidor de SQS mediante long-polling.
-   - Formateo de datos de series temporales (ordenados por límites `-1` y marcas de tiempo) almacenados en **MongoDB**.
+   - Despliegue dual: soporte para desarrollo local con **Docker Compose** o arquitectura Cloud-Native en **Kubernetes**.
+   - Microservicio **Node.js** actuando como consumidor de SQS mediante long-polling con sondas _Liveness_ y _Readiness_.
+   - Persistencia de series temporales en **MongoDB** estructurado como `StatefulSet` en Kubernetes con volúmenes persistentes (`PVC`).
 4. **Observabilidad (Frontend):**
-   - Dashboard de **Grafana** contenedorizado junto con el backend.
+   - Dashboard de **Grafana** contenedorizado junto con el backend (accesible vía `NodePort` en Kubernetes o puerto 3000 en Docker).
    - Consume datos mediante una API REST JSON personalizada con parámetros adaptados de `cache-busting` (`?cb=${__to}`) para garantizar la transmisión de datos en vivo sin latencia.
 5. **Infraestructura como Código (IaC) & GitOps:**
-   - Despliegue declarativo y versionado de AWS con **Terraform**.
-   - Gestión de estado remoto seguro con cifrado en **AWS S3** y bloqueo de concurrencia con **DynamoDB**.
+   - Despliegue declarativo de infraestructura en AWS con **Terraform** y backend remoto seguro (**AWS S3** + **DynamoDB State Locking**).
    - Pipeline CI/CD en **GitHub Actions**: validación y `terraform plan` predictivo en Pull Requests, y `terraform apply` automático al fusionar a `main`.
+   - Continuous Delivery / GitOps con **ArgoCD**: orquestación declarativa de microservicios con **Kustomize** sincronizados en tiempo real desde GitHub con _Self-Healing_.
 
 ---
 
@@ -108,9 +109,40 @@ Toda la infraestructura requerida en AWS se despliega automáticamente en segund
 
 ---
 
-## 🚀 Despliegue Local (Backend y Observabilidad)
+## ☸️ Opción 1: Despliegue Cloud-Native & GitOps (Kubernetes + ArgoCD) [Recomendado]
 
-Las capas de backend y observabilidad están completamente contenedorizadas. Puede iniciar el entorno local (API Node.js, MongoDB y Grafana) utilizando Docker.
+Para entornos escalables y de producción, la arquitectura se orquesta de forma declarativa con **Kubernetes** y **Kustomize**, y se sincroniza automáticamente mediante **ArgoCD**:
+
+### 1. Despliegue Automático con ArgoCD (GitOps)
+
+Si ya tiene ArgoCD instalado en su clúster de Kubernetes, simplemente aplique el manifiesto de la aplicación:
+
+```bash
+kubectl apply -f k8s/argocd/application.yaml
+```
+
+ArgoCD leerá continuamente este repositorio, desplegará los microservicios en el namespace `iot-pipeline` y mantendrá el clúster sincronizado de forma autónoma.
+
+- **Acceso a la UI de ArgoCD:** `https://localhost:8085` (o vía `kubectl port-forward svc/argocd-server -n argocd 8085:443`).
+
+### 2. Despliegue Manual con Kustomize (Sin ArgoCD)
+
+```bash
+# 1. Aplicar la configuración base en el clúster
+kubectl apply -k ./k8s/base
+
+# 2. Verificar el estado de pods y servicios
+kubectl get pods,svc,pvc -n iot-pipeline
+
+# 3. Acceder a Grafana en el clúster
+kubectl port-forward svc/grafana-service -n iot-pipeline 3000:3000
+```
+
+---
+
+## 🚀 Opción 2: Despliegue Rápido Local (Docker Compose) [Ligero]
+
+Para pruebas de desarrollo local en un solo comando sin requerir un clúster de Kubernetes activo:
 
 ### Requisitos Previos
 
@@ -118,15 +150,7 @@ Las capas de backend y observabilidad están completamente contenedorizadas. Pue
 
 ### Instrucciones de Configuración
 
-1. **Clonar este repositorio:**
-
-   ```bash
-   git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
-   cd esp32-iot-telemetry-pipeline
-   ```
-
-2. **Configurar las Variables de Entorno:**
-   Navegue al directorio de backend y configure sus credenciales de AWS.
+1. **Configurar las Variables de Entorno:**
 
    ```bash
    cd backend
@@ -134,24 +158,26 @@ Las capas de backend y observabilidad están completamente contenedorizadas. Pue
    # Edite el archivo .env con sus claves de AWS IAM y la URL de SQS.
    ```
 
-3. **Iniciar los Microservicios:**
+2. **Iniciar los Microservicios:**
 
    ```bash
    docker-compose up -d --build
    ```
 
-4. **Acceder a los Servicios:**
-
-- Dashboard de Grafana: http://localhost:3000 (Predeterminado: admin / admin)
-- API REST de Node.js: http://localhost:3001
-- Instancia de MongoDB: mongodb://localhost:27017
+3. **Acceder a los Servicios:**
+   - Dashboard de Grafana: http://localhost:3000 (Predeterminado: admin / admin)
+   - API REST de Node.js: http://localhost:8080
+   - Instancia de MongoDB: mongodb://localhost:27017
 
 _La persistencia de datos está configurada mediante volúmenes de Docker (/var/lib/grafana y /data/db) para garantizar que las configuraciones de los dashboards y los datos de telemetría persistan tras el reinicio de los contenedores._
 
+---
+
 ## 🛠️ Aspectos Técnicos Destacados
 
+- **Orquestación Cloud-Native & GitOps (Kubernetes & ArgoCD):** Arquitectura declarativa con Kustomize, base de datos persistente mediante `StatefulSet`, sondas de resiliencia (`liveness/readiness probes`) y reconciliación continua automatizada con ArgoCD (_Self-Healing_).
 - **Infraestructura como Código (IaC) & GitOps:** Despliegue cloud 100% automatizado mediante Terraform en HCL, backend remoto protegido en AWS S3 con DynamoDB state locking, y pipeline CI/CD en GitHub Actions con planes predictivos en PRs.
 - **Resiliencia y Confiabilidad:** Desacoplamiento asíncrono con AWS SQS y Dead Letter Queue (DLQ) con política de reintentos para aislar errores sin interrupciones.
 - **Seguridad Criptográfica:** Implementación del Principio de Menor Privilegio a lo largo de todo el ciclo de vida del dispositivo y roles IAM acotados.
-- **Orquestación de Microservicios:** Componentes de backend completamente aislados utilizando redes y volúmenes de Docker.
+- **Orquestación de Microservicios:** Componentes de backend completamente aislados utilizando redes y volúmenes de Docker o Kubernetes.
 - **Observabilidad en Tiempo Real:** Resolución de la latencia nativa del dashboard mediante la ingeniería de un endpoint API personalizado con cache-busting para Grafana.

@@ -4,7 +4,7 @@
 
 # 🌐 Enterprise IoT Provisioning & Telemetry Pipeline
 
-End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated with Node.js, MongoDB, and Grafana via Docker, with automated cloud infrastructure using Terraform (IaC) and a GitOps pipeline via GitHub Actions.
+End-to-end Cloud Native IoT telemetry pipeline: ESP32 to AWS (JITP), orchestrated both with Docker and native Kubernetes using ArgoCD (GitOps), with automated cloud infrastructure via Terraform (IaC) and CI/CD via GitHub Actions.
 The firmware is built with modularity in mind, featuring concurrent tasks for UWB distance measurement, BLE provisioning/diagnostics, and AWS IoT MQTT communication, managed via RTOS.
 
 ![ESP32](https://img.shields.io/badge/ESP32-000000?style=for-the-badge&logo=espressif&logoColor=white)
@@ -53,15 +53,16 @@ The pipeline is structured into five distinct layers:
    - Decoupling and message queuing via **AWS SQS** for reliable backend processing.
    - Fault tolerance & resilience: **Dead Letter Queue (DLQ)** with automatic redrive policy.
 3. **Backend & Persistence:**
-   - Containerized **Node.js** microservice acting as an SQS consumer using long-polling.
-   - Time-series data formatting (ordered by `-1` limits and timestamps) stored in **MongoDB**.
+   - Dual deployment support: lightweight local development with **Docker Compose** or Cloud-Native architecture on **Kubernetes**.
+   - Containerized **Node.js** microservice acting as an SQS consumer using long-polling with _Liveness_ and _Readiness_ probes.
+   - Time-series data formatting stored in **MongoDB** configured as a `StatefulSet` on Kubernetes with Persistent Volume Claims (`PVC`).
 4. **Observability (Frontend):**
-   - **Grafana** dashboard containerized alongside the backend.
+   - **Grafana** dashboard containerized alongside the backend (accessible via `NodePort` on Kubernetes or port 3000 on Docker).
    - Consumes data via a Custom JSON REST API with tailored `cache-busting` parameters (`?cb=${__to}`) to ensure zero-latency live data streaming.
 5. **Infrastructure as Code (IaC) & GitOps:**
-   - Declarative and version-controlled AWS deployment with **Terraform**.
-   - Secure remote state storage encrypted in **AWS S3** with **DynamoDB State Locking**.
+   - Declarative cloud provisioning on AWS with **Terraform** and encrypted remote state (**AWS S3** + **DynamoDB State Locking**).
    - Automated CI/CD pipeline via **GitHub Actions**: predictive `terraform plan` comments on Pull Requests and automatic `terraform apply` on merge to `main`.
+   - Continuous Delivery / GitOps via **ArgoCD**: declarative microservices orchestration using **Kustomize** continuously reconciled from GitHub with automated _Self-Healing_.
 
 ---
 
@@ -107,9 +108,42 @@ All required AWS cloud infrastructure can be provisioned in seconds using Terraf
 
 ---
 
-## 🚀 Local Deployment (Backend & Observability)
+---
 
-The backend and observability layers are fully containerized. You can spin up the local environment (Node.js API, MongoDB, and Grafana) using Docker.
+## ☸️ Option 1: Cloud-Native & GitOps Deployment (Kubernetes + ArgoCD) [Recommended]
+
+For production and highly scalable environments, the application layer is declaratively managed with **Kubernetes** and **Kustomize**, and continuously reconciled via **ArgoCD**:
+
+### 1. Automated Deployment with ArgoCD (GitOps)
+
+If ArgoCD is installed in your Kubernetes cluster, simply apply the application manifest:
+
+```bash
+kubectl apply -f k8s/argocd/application.yaml
+```
+
+ArgoCD will continuously monitor this repository, deploy all microservices to the `iot-pipeline` namespace, and automatically enforce desired cluster state.
+
+- **ArgoCD Web Console:** `https://localhost:8085` (or via `kubectl port-forward svc/argocd-server -n argocd 8085:443`).
+
+### 2. Manual Deployment via Kustomize (Without ArgoCD)
+
+```bash
+# 1. Apply base configuration to the cluster
+kubectl apply -k ./k8s/base
+
+# 2. Verify pods, services, and PVCs
+kubectl get pods,svc,pvc -n iot-pipeline
+
+# 3. Access Grafana running in the cluster
+kubectl port-forward svc/grafana-service -n iot-pipeline 3000:3000
+```
+
+---
+
+## 🚀 Option 2: Fast Local Quickstart (Docker Compose) [Lightweight]
+
+For rapid local developer testing without requiring an active Kubernetes cluster:
 
 ### Prerequisites
 
@@ -117,43 +151,34 @@ The backend and observability layers are fully containerized. You can spin up th
 
 ### Setup Instructions
 
-1. **Clone this repository:**
-
-   ```bash
-   git clone https://github.com/Rivero-Agustin/esp32-iot-telemetry-pipeline.git
-   cd esp32-iot-telemetry-pipeline
-
-   ```
-
-2. Configure Environment Variables:
-   Navigate to the backend directory and set up your AWS credentials.
+1. **Configure Environment Variables:**
 
    ```bash
    cd backend
    cp .env.example .env
-   *Edit the .env file with your AWS IAM keys and SQS URL.*
-
+   # Edit .env with your AWS IAM credentials and SQS queue URL
    ```
 
-3. Start the Microservices:
+2. **Start the Microservices:**
 
    ```bash
    docker-compose up -d --build
-
    ```
 
-4. Access the Services:
-
-- Grafana Dashboard: http://localhost:3000 (Default: admin / admin)
-- Node.js REST API: http://localhost:3001
-- MongoDB Instance: mongodb://localhost:27017
+3. **Access the Services:**
+   - Grafana Dashboard: http://localhost:3000 (Default: admin / admin)
+   - Node.js REST API: http://localhost:8080
+   - MongoDB Instance: mongodb://localhost:27017
 
 _Data persistence is configured via Docker volumes (/var/lib/grafana and /data/db) to ensure dashboard layouts and telemetry data survive container restarts._
 
+---
+
 ## 🛠️ Key Technical Highlights
 
+- **Cloud-Native Orchestration & GitOps (Kubernetes & ArgoCD):** Declarative architecture using Kustomize, stateful persistence via `StatefulSet`, container health management (`liveness/readiness probes`), and automated continuous reconciliation (_Self-Healing_).
 - **Infrastructure as Code (IaC) & GitOps:** 100% automated cloud deployment using Terraform in HCL, secure remote state storage on AWS S3 with DynamoDB state locking, and an automated GitHub Actions CI/CD pipeline with predictive plan PR comments.
 - **Message Resilience & Reliability:** Asynchronous decoupling via AWS SQS combined with a Dead Letter Queue (DLQ) and automatic redrive policies to isolate errors without pipeline interruption.
 - **Cryptographic Security:** Strict implementation of the Principle of Least Privilege across the device lifecycle and granular IAM roles.
-- **Microservices Orchestration:** Fully isolated backend components using Docker networks and volumes.
+- **Microservices Orchestration:** Fully isolated backend components using Docker networks and volumes or native Kubernetes networking.
 - **Real-time Observability:** Solved native dashboard latency by engineering a custom cache-busting API endpoint for Grafana.
