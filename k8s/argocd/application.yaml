@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: iot-telemetry-pipeline
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # URL del repositorio oficial que ArgoCD va a monitorear continuamente
+    repoURL: "https://github.com/Rivero-Agustin/enterprise-iot-telemetry-pipeline.git"
+    targetRevision: HEAD
+    path: k8s/base
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: iot-pipeline
+  syncPolicy:
+    automated:
+      prune: true # Elimina en K8s recursos que hayan sido borrados en Git
+      selfHeal: true # Corrige automáticamente cualquier cambio manual que no esté en Git
+    syncOptions:
+      - CreateNamespace=true

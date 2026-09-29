@@ -15,6 +15,8 @@ The firmware is built with modularity in mind, featuring concurrent tasks for UW
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E8.svg?style=for-the-badge&logo=githubactions&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/argo%20cd-%23EF7B4D.svg?style=for-the-badge&logo=argo&logoColor=white)
 
 > **🔒 Security Note:** Sensitive data such as AWS IAM credentials, Wi-Fi passwords, and X.509 cryptographic certificates have been removed from this repository. Please refer to the `.env.example` (backend) and `config.example.h` (firmware) files to configure your own environment.
 
